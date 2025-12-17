@@ -5,13 +5,14 @@ metadata:
   namespace: roboshop
 data:
   MONGO: "true"
-  MONGO_URL: {{ .Values.configmap.mongoURL | quote }}
+  MONGO_URL: {{ .Values.configmap.mongoURL }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: catalogue
   namespace: roboshop
+  # these are replica set labels
   labels:
     project: roboshop
     component: catalogue
@@ -19,10 +20,12 @@ metadata:
 spec:
   replicas: 1
   selector:
+    # these labels are used to select pods
     matchLabels:
       project: roboshop
       component: catalogue
       tier: backend
+  # pod definition
   template:
     metadata:
       labels:
@@ -32,24 +35,24 @@ spec:
     spec:
       containers:
       - name: catalogue
-        image: "{{ .Values.deployment.imageRepo }}:{{ .Values.deployment.imageVersion }}"
+        image: "{{ .Values.deployment.imageRepo }}:{{ .Values.deployment.imageVersion}}"
         imagePullPolicy: Always
         envFrom:
         - configMapRef:
             name: catalogue
         ports:
-        - name: http
+        - name: liveness-port
           containerPort: 8080
         readinessProbe:
           httpGet:
             path: /health
-            port: http
+            port: liveness-port
           failureThreshold: 1
           periodSeconds: 15
         livenessProbe:
           httpGet:
             path: /health
-            port: http
+            port: liveness-port
           failureThreshold: 1
           periodSeconds: 15
 ---
@@ -59,12 +62,11 @@ metadata:
   name: catalogue
   namespace: roboshop
 spec:
-  type: ClusterIP
   selector:
     project: roboshop
     component: catalogue
     tier: backend
   ports:
     - protocol: TCP
-      port: {{ .Values.service.servicePort }}
-      targetPort: 8080
+      port: {{ .Values.service.servicePort }} # service port
+      targetPort: 8080 # container port
