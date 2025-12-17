@@ -1,0 +1,5 @@
+deployment:
+  imageRepo: krishnachaitanyadevops1/mongodb
+  imageVersion: v1
+service:
+  type: ClusterIP
